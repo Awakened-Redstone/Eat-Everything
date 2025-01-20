@@ -1,0 +1,10 @@
+{
+  "add": {
+    "minecraft:consumable": {},
+    "minecraft:food": {
+      "saturation": 4,
+      "nutrition": 1.3,
+      "can_always_eat": true
+    }
+  }
+}

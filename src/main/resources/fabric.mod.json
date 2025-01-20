@@ -1,26 +1,21 @@
 {
   "schemaVersion": 1,
-  "id": "food",
+  "id": "eat-everything",
   "version": "${version}",
-  "name": "Food",
-  "description": "Eat everything",
+  "name": "Eat everything",
+  "description": "Makes all items edible",
   "authors": [
-    "AwakenedRedstone"
+    "Awakened Redstone"
   ],
-  "contact": {},
-  "license": "AGPL-3.0",
-  "icon": "assets/food/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "com.awakenedredstone.food.Food"
-    ]
+  "contact": {
+    "repo": "https://github.com/Awakened-Redstone/Eat-Everything"
   },
-  "mixins": [
-    "food.mixins.json"
-  ],
+  "license": "LGPL-3.0",
+  "icon": "assets/eat-everything/icon.png",
+  "environment": "*",
   "depends": {
-    "fabricloader": ">=0.13.1",
-    "minecraft": "1.18.1"
+    "fabricloader": "*",
+    "default_components": ">=0.1.0",
+    "minecraft": ">=1.20.5"
   }
 }

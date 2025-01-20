@@ -1,5 +1,6 @@
 plugins {
-    id 'fabric-loom' version '0.11-SNAPSHOT'
+    id "me.modmuss50.mod-publish-plugin" version "0.8.4"
+    id 'fabric-loom' version '1.9-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -7,11 +8,17 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
-    // Add repositories to retrieve artifacts from in here.
-    // You should only use this when depending on other mods because
-    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-    // for more information about repositories.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 dependencies {
@@ -19,7 +26,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
+    //modRuntimeOnly "maven.modrinth:default-components:0.1.2"
 }
 
 processResources {
@@ -31,7 +38,7 @@ processResources {
     }
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
@@ -61,19 +68,67 @@ jar {
     }
 }
 
-// configure the maven publication
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
+String CHANGELOG = new File("CHANGELOG.md").exists() ? file("CHANGELOG.md").text : "No changelog provided"
 
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
+String projectVersion = project.version.toString()
+List<String> projectVersionNumber = projectVersion.split("-", 2)
+String projectVersionName = "Release ${projectVersionNumber[0]}"
+if (projectVersion.contains("beta")) {
+    List<String> projectBeta = projectVersionNumber[1].split("\\.", 2)
+    projectVersionName = "${projectVersionNumber[0]} - Beta ${projectBeta[1]}"
+    versionType = "beta"
+} else if (projectVersion.contains("alpha")) {
+    List<String> projectAlpha = projectVersionNumber[1].split("\\.", 2)
+    projectVersionName = "${projectVersionNumber[0]} - Alpha ${projectAlpha[1]}"
+    versionType = "alpha"
+} else if (projectVersion.contains("rc")) {
+    List<String> projectRC = projectVersionNumber[1].split("\\.", 2)
+    projectVersionName = "${projectVersionNumber[0]} - Release Candidate ${projectRC[1]}"
+    versionType = "beta"
+}
+
+publishMods {
+    file = remapJar.archiveFile
+    changelog = CHANGELOG
+    type = STABLE
+    modLoaders.add("fabric")
+    displayName = projectVersionName
+
+    /*curseforge {
+        setDisplayName(projectVersionName)
+        projectId = "1099230"
+        projectSlug = "default-components" // Required for discord webhook
+        accessToken = providers.gradleProperty("CURSEFORGE_TOKEN")
+        minecraftVersions.add(property("minecraft_version"))
+        requires("fabric-api")
+    }*/
+    modrinth {
+        setDisplayName(projectVersionName)
+        projectId = "wClXGUiL"
+        accessToken = providers.gradleProperty("MODRINTH_TOKEN")
+        minecraftVersions.add(property("minecraft_version"))
+        requires("default-components")
+    }
+    /*github {
+        repository = "test/example"
+        accessToken = providers.gradleProperty("GITHUB_TOKEN")
+        commitish = "main"
+    }*/
+    discord {
+        content = """
+# Eat Everything | ${projectVersionName}
+
+${CHANGELOG}"""
+
+        avatarUrl = "https://cdn.discordapp.com/avatars/1268055578073108574/73106a33f497ea5f2c676bcfb4816917.webp"
+        username = "Mod updates"
+        webhookUrl = providers.gradleProperty("DISCORD_WEBHOOK")
+        dryRunWebhookUrl = providers.gradleProperty("DRY_WEBHOOK")
+        style {
+            look = "MODERN"
+            link = "BUTTON"
+            thumbnailUrl = "https://cdn.modrinth.com/data/wClXGUiL/icon.png"
+            color = "modrinth"
+        }
     }
 }
